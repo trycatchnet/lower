@@ -91,7 +91,8 @@ void render_html(http_response_t *res, const char *filename) {
     chunked_write(res->chunked_fd, "", 0);
 }
 
-void static_file_handler(http_request_t *req, http_response_t *res) {
+void static_file_handler(http_request_t *req, http_response_t *res)
+{
     char filepath[512];
     const char *base_path = "./public";
 
@@ -102,8 +103,7 @@ void static_file_handler(http_request_t *req, http_response_t *res) {
         return;
     }
 
-    // Handle paths starting with '/'
-    const char* path = req->path;
+    const char *path = req->path;
     if (*path == '/') path++;
     snprintf(filepath, sizeof(filepath), "%s/%s", base_path, path);
 
@@ -120,49 +120,59 @@ void static_file_handler(http_request_t *req, http_response_t *res) {
     fseek(file, 0, SEEK_SET);
 
     char *content = malloc(file_size);
-    size_t bytes_read = fread(content, 1, file_size, file);
-    if (bytes_read != (size_t)file_size) {
-        perror("File read error");
-        free(content);
+    if (!content) {
         fclose(file);
         res->status_code = 500;
         lw_set_body(res, "Internal Server Error");
         return;
     }
+
+    size_t bytes_read = fread(content, 1, file_size, file);
     fclose(file);
+    if (bytes_read != (size_t)file_size) {
+        free(content);
+        res->status_code = 500;
+        lw_set_body(res, "Internal Server Error");
+        return;
+    }
 
     const char *ext = strrchr(filepath, '.');
     if (ext) {
-        if (strcmp(ext, ".css") == 0) lw_set_header(res, "Content-Type: text/css");
-        else if (strcmp(ext, ".js") == 0) lw_set_header(res, "Content-Type: application/javascript");
-        else if (strcmp(ext, ".png") == 0) lw_set_header(res, "Content-Type: image/png");
-        else if (strcmp(ext, ".jpg") == 0 || strcmp(ext, ".jpeg") == 0) 
-            lw_set_header(res, "Content-Type: image/jpeg");
-        else if (strcmp(ext, ".gif") == 0) lw_set_header(res, "Content-Type: image/gif");
-        else if (strcmp(ext, ".svg") == 0) lw_set_header(res, "Content-Type: image/svg+xml");
-        else if (strcmp(ext, ".ico") == 0) lw_set_header(res, "Content-Type: image/x-icon");
-        else if (strcmp(ext, ".woff2") == 0) lw_set_header(res, "Content-Type: font/woff2");
-        else if (strcmp(ext, ".woff") == 0) lw_set_header(res, "Content-Type: font/woff");
-        else if (strcmp(ext, ".ttf") == 0) lw_set_header(res, "Content-Type: font/ttf");
-        else if (strcmp(ext, ".otf") == 0) lw_set_header(res, "Content-Type: font/otf");
-        else if (strcmp(ext, ".eot") == 0) lw_set_header(res, "Content-Type: application/vnd.ms-fontobject");
-        else if (strcmp(ext, ".json") == 0) lw_set_header(res, "Content-Type: application/json");
-        else if (strcmp(ext, ".xml") == 0) lw_set_header(res, "Content-Type: application/xml");
-        else if (strcmp(ext, ".pdf") == 0) lw_set_header(res, "Content-Type: application/pdf");
-        else if (strcmp(ext, ".zip") == 0) lw_set_header(res, "Content-Type: application/zip");
-        else if (strcmp(ext, ".txt") == 0) lw_set_header(res, "Content-Type: text/plain");
-        else lw_set_header(res, "Content-Type: text/html; charset=utf-8");
+        if      (strcmp(ext, ".css") == 0)       lw_set_header(res, "Content-Type: text/css");
+        else if (strcmp(ext, ".js")  == 0)       lw_set_header(res, "Content-Type: application/javascript");
+        else if (strcmp(ext, ".png")  == 0)      lw_set_header(res, "Content-Type: image/png");
+        else if (strcmp(ext, ".jpg")  == 0 ||
+                 strcmp(ext, ".jpeg") == 0)      lw_set_header(res, "Content-Type: image/jpeg");
+        else if (strcmp(ext, ".gif")  == 0)      lw_set_header(res, "Content-Type: image/gif");
+        else if (strcmp(ext, ".svg")  == 0)      lw_set_header(res, "Content-Type: image/svg+xml");
+        else if (strcmp(ext, ".ico")  == 0)      lw_set_header(res, "Content-Type: image/x-icon");
+        else if (strcmp(ext, ".woff2") == 0)     lw_set_header(res, "Content-Type: font/woff2");
+        else if (strcmp(ext, ".woff")  == 0)     lw_set_header(res, "Content-Type: font/woff");
+        else if (strcmp(ext, ".ttf")   == 0)     lw_set_header(res, "Content-Type: font/ttf");
+        else if (strcmp(ext, ".otf")   == 0)     lw_set_header(res, "Content-Type: font/otf");
+        else if (strcmp(ext, ".eot")   == 0)     lw_set_header(res, "Content-Type: application/vnd.ms-fontobject");
+        else if (strcmp(ext, ".json")  == 0)     lw_set_header(res, "Content-Type: application/json");
+        else if (strcmp(ext, ".xml")   == 0)     lw_set_header(res, "Content-Type: application/xml");
+        else if (strcmp(ext, ".pdf")   == 0)     lw_set_header(res, "Content-Type: application/pdf");
+        else if (strcmp(ext, ".zip")   == 0)     lw_set_header(res, "Content-Type: application/zip");
+        else if (strcmp(ext, ".txt")   == 0)     lw_set_header(res, "Content-Type: text/plain");
+        else                                      lw_set_header(res, "Content-Type: text/html; charset=utf-8");
     } else {
         lw_set_header(res, "Content-Type: text/html; charset=utf-8");
     }
 
-    // Add reload header if needed
     time_t now = time(NULL);
     if (now - hot_reload_state.last_change_time <= 2) {
         lw_set_header(res, "X-Reload: 1");
     }
 
-    lw_set_body_bin(res, content, file_size);
+    if (LW_DEV_MODE && res->chunked_fd >= 0) {
+        chunked_write(res->chunked_fd, content, file_size);
+        chunked_write(res->chunked_fd, "", 0);
+    } else {
+        lw_set_body_bin(res, content, file_size);
+    }
+
     free(content);
 }
 

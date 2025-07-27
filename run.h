@@ -30,7 +30,7 @@ extern int LW_SSL_ENABLED;
 extern int LW_COMPRESS;
 extern const char* LW_CERT_FILE;
 extern const char* LW_KEY_FILE;
-extern char *ACCEPT_ENCODING;
+extern const char *ACCEPT_ENCODING;
 extern SSL *LW_SSL;
 extern SSL_CTX *ssl_ctx;
 
@@ -137,5 +137,7 @@ SSL_CTX* create_ssl_ctx();
 void configure_ssl_ctx(SSL_CTX* ctx, const char* cert_file, const char* key_file);
 
 int get_reload_pipe_fd(void);
+
+void index_handler(http_request_t *req, http_response_t *res);
 
 #endif

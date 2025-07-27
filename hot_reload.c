@@ -38,7 +38,6 @@ static void notify_reload(void) {
     hot_reload_state.last_change_time = time(NULL);
     printf("[DEV] File change detected - reload pending\n");
     
-    // Write to pipe to wake up main thread
     char sig = 'R';
     write(hot_reload_state.reload_pipe[1], &sig, 1);
 }

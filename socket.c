@@ -212,7 +212,10 @@ int lw_run(int port) {
 
             http_response_t response = {0};
             init_response(&response);
-            response.chunked_fd = (LW_DEV_MODE) ? client_socket : -1;
+            response.chunked_fd = (LW_DEV_MODE &&
+                       route && route->handler == index_handler)
+                          ? client_socket
+                          : -1;
 
             if (route) {
                 route->handler(&request, &response);

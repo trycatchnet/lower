@@ -11,7 +11,7 @@ int reload_needed = 0;
 int LW_COMPRESS = 0;
 const char* LW_CERT_FILE = NULL;
 const char* LW_KEY_FILE = NULL;
-char *ACCEPT_ENCODING = NULL;
+extern const char *ACCEPT_ENCODING = NULL;
 
 SSL *LW_SSL = NULL;
 SSL_CTX *ssl_ctx = NULL;
