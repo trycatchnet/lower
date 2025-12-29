@@ -1,5 +1,5 @@
 <div align="center">
-    <img height="160" alt="lower-logo" src="https://github.com/user-attachments/assets/7722b447-088b-4379-8521-710e7da412e3" />
+    <img height="160" alt="lower-logo" src="https://github.com/user-attachments/assets/8af845fe-0852-46d6-a8fd-f9b5a99ee9b1" />
 </div>
 
 <h1 align="center">Lower Web Framework</h1>
